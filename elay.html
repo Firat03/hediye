@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Seni Çok Seviyorum</title>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root { --pink: #ff758c; --dark-pink: #ff4b6b; --bg: #fffcfc; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body, html { margin: 0; padding: 0; overflow-x: hidden; font-family: 'Poppins', sans-serif; background-color: var(--bg); color: #333; }
+
+        /* Arka Plan Canvas */
+        #star-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; background: linear-gradient(to bottom, #ffe6ea, #fff); }
+
+        .screen {
+            min-height: 100vh; display: none; flex-direction: column;
+            align-items: center; justify-content: center; text-align: center;
+            padding: 20px; opacity: 0; transition: opacity 0.8s ease;
+        }
+        .active { display: flex; opacity: 1; }
+
+        /* ADIM 0: ŞİFRELİ GİRİŞ */
+        .heart-loader {
+            font-size: 6rem; animation: pulse-glow 2s infinite; cursor: default; margin-bottom: 30px;
+            text-shadow: 0 0 30px rgba(255, 117, 140, 0.8); color: #ff4b6b;
+        }
+        @keyframes pulse-glow {
+            0% { transform: scale(1); opacity: 0.9; }
+            50% { transform: scale(1.15); opacity: 1; text-shadow: 0 0 50px rgba(255, 117, 140, 1); }
+            100% { transform: scale(1); opacity: 0.9; }
+        }
+        
+        .password-container {
+            background: rgba(255, 255, 255, 0.85); padding: 30px; border-radius: 25px;
+            box-shadow: 0 20px 60px rgba(255, 117, 140, 0.4); max-width: 340px; width: 90%;
+            border: 3px solid rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px);
+            position: relative; z-index: 11;
+        }
+        .password-container h2 { font-family: 'Dancing Script', cursive; color: var(--pink); margin-top: 0; font-size: 1.8rem; }
+        .password-container input {
+            width: 100%; padding: 15px; border: 2px solid #ffdde1; border-radius: 15px;
+            text-align: center; font-size: 1.2rem; margin-bottom: 15px; outline: none;
+            background: white; color: var(--pink); font-weight: bold;
+        }
+        .error-msg { color: #ff4b6b; font-size: 0.9rem; display: none; margin-bottom: 15px; font-weight: 600; }
+
+        /* PATLAMA EFEKTİ */
+        .particle { position: fixed; top: 50%; left: 50%; font-size: 24px; pointer-events: none; z-index: 9999; opacity: 0; }
+
+        /* BAŞLIKLAR VE BUTONLAR */
+        .welcome-title { font-family: 'Dancing Script', cursive; font-size: clamp(2.2rem, 7vw, 3.8rem); color: var(--pink); margin-bottom: 10px; }
+        .btn { background: var(--pink); color: white; border: none; padding: 15px 35px; border-radius: 50px; font-size: 1rem; font-weight: 600; cursor: pointer; margin-top: 30px; box-shadow: 0 8px 20px rgba(255, 117, 140, 0.3); transition: 0.3s; }
+        .btn:hover { transform: scale(1.05); background: var(--dark-pink); }
+
+        /* GALERİ TASARIMI (1080x1350 UYUMU) */
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr); /* iPad ve Masaüstünde 3'lü */
+            gap: 15px;
+            width: 100%;
+            max-width: 1000px;
+            padding: 10px;
+        }
+
+        .polaroid {
+            background: white;
+            padding: 10px 10px 25px 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            transform: rotate(var(--r));
+            transition: 0.3s;
+            width: 100%;
+        }
+
+        .polaroid img {
+            width: 100%;
+            aspect-ratio: 4 / 5; /* 1080x1350 Oranı */
+            object-fit: cover;
+            border: 1px solid #f9f9f9;
+        }
+
+        .polaroid p { font-family: 'Dancing Script', cursive; margin: 10px 0 0 0; font-size: 1.1rem; color: #555; }
+
+        .door-container { display: flex; gap: 15px; perspective: 1000px; justify-content: center; margin-top: 30px; }
+        .door {
+            width: 80px; height: 130px; background: linear-gradient(145deg, #e6be94, #d4a373); border: 3px solid #fff;
+            border-radius: 10px 10px 2px 2px; cursor: pointer; transition: 0.5s; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;
+        }
+        .door:hover { transform: rotateY(-25deg) translateY(-5px); }
+
+        /* ZARF VE MEKTUP */
+        .envelope-wrapper { position: relative; width: 280px; height: 180px; background: #f08080; cursor: pointer; margin: 40px auto; }
+        .envelope-wrapper::before { content: ''; position: absolute; top: 0; left: 0; border-left: 140px solid transparent; border-right: 140px solid transparent; border-top: 90px solid #ff9999; transform-origin: top; transition: 0.5s; }
+        .envelope-wrapper.open::before { transform: rotateX(180deg); }
+        .letter { position: absolute; bottom: 0; left: 5px; right: 5px; height: 90%; background: white; padding: 20px; text-align: left; transition: 0.5s; z-index: -1; overflow-y: auto; font-size: 0.95rem; line-height: 1.6; }
+        .envelope-wrapper.open .letter { transform: translateY(-130px); height: 280px; z-index: 2; box-shadow: 0 -5px 20px rgba(0,0,0,0.1); }
+
+        /* MOBİL AYAR (Sadece çok küçük ekranlarda 2'ye düşer) */
+        @media (max-width: 500px) {
+            .gallery-grid { grid-template-columns: repeat(2, 1fr); }
+            .polaroid img { aspect-ratio: 4 / 5; }
+        }
+
+        @keyframes shake { 0%, 100% {transform: translateX(0);} 20%, 60% {transform: translateX(-10px);} 40%, 80% {transform: translateX(10px);} }
+    </style>
+</head>
+<body>
+
+    <canvas id="star-canvas"></canvas>
+
+    <div id="step0" class="screen active">
+        <div class="heart-loader">💖</div>
+        <div class="password-container" id="pwd-box">
+            <h2>Bizim Tarihimiz?</h2>
+            <input type="text" id="dateInput" placeholder="GG.AA.YYYY" maxlength="10">
+            <div id="error" class="error-msg">Bu tarih o tarih değil sevgilim... 🥺</div>
+            <button class="btn" style="margin-top:0; width:100%" onclick="checkDate()">Sürprizi Aç ✨</button>
+        </div>
+    </div>
+
+    <div id="step1" class="screen">
+        <h1 class="welcome-title">Hoşgeldin Güzelim,</h1>
+        <p style="color:#888; font-weight: 600; letter-spacing: 1px;">SENİNLE NİCE MUTLU YILLARA</p>
+        <div class="door-container">
+            <div style="text-align:center"><div class="door" onclick="nextStep(1, 2)">1</div><p style="font-size:10px; color:var(--pink)">GEÇMİŞ</p></div>
+            <div style="text-align:center"><div class="door" onclick="nextStep(1, 2)">2</div><p style="font-size:10px; color:var(--pink)">BUGÜN</p></div>
+            <div style="text-align:center"><div class="door" onclick="nextStep(1, 2)">3</div><p style="font-size:10px; color:var(--pink)">SONSUZLUK</p></div>
+        </div>
+    </div>
+
+    <div id="step2" class="screen">
+        <h1 class="welcome-title">Nasıl Başladık?</h1>
+        <div class="gallery-grid">
+            <div class="polaroid" style="--r: -2deg"><img src="elay13.jpg"><p>İlk An</p>Evet asko sana 'ben zor insanım dediğimde direk tamam sorun yok demeni hiç beklemiyordum aslında.Senden öyle cevap çıkınca dedim vay be allah allah buda ilk günümüz sana şükretmeye başladığım ilk gün !</div>
+            <div class="polaroid" style="--r: 2deg"><img src="elay4.jpg"><p>İlk Piknik</p>Bak burda sana soslu et i öğretmiştim haa biliyosun ahahahah.Senle geçirdiğim her an gibi buda o kadar mangal kokmama rağmen senle olduğu için çok ama çok güzeldi ve mutluyuuz !</div>
+            <div class="polaroid" style="--r: -1deg"><img src="elay8.jpg"><p>İlk Ödev</p>Mesleğime ilk adımıda senle atmıştım galiba ahahahah yemek de güzel değildi yaptığın da neyse şimdi konumuz başka ama senle olan her şey ama her şey mükemmel nasıl başarıyorsun bunu bilmiyorum.</div>
+        </div>
+        <button class="btn" onclick="nextStep(2, 3)">Devam Edelim mi? ✨</button>
+    </div>
+
+    <div id="step3" class="screen">
+        <h1 class="welcome-title">En Güzel Anlar</h1>
+        <div class="gallery-grid">
+            <div class="polaroid" style="--r: 1deg"><img src="elay10.jpg"><p>Mekandaki İlk Artistik Pozlarımız</p>Evet senle yaşamak ayrı bir his senle gezmek senle görmek senle birşeyler yapmak beni hep mutlu etti yeri geldiğinde ne kadar sinir etsende</div>
+            <div class="polaroid" style="--r: -2deg"><img src="elay11.jpg"><p>Işık , Sarafin , Salıncak</p>Ne Çekti o sarafin elimizden hış oldu ama bizdeki yeri hep ayrı bendeki olan yeri bambaşka çünkü sen varsın senle mutlu anlar var hızlı zamanlar mevcut hayatıma giren ve destek veren en güzel şeysin sen bende</div>
+            <div class="polaroid" style="--r: 3deg"><img src="elay9.jpg"><p>İyi ki Yanımdasın</p>Yani burda gerçekten çok korkmuştum çünkü doğum gününü unuttum ve benim için çok utanç vericiydi bir de işin garip tarafı cebimde param da yoktu sıkıntı üstüne sıkıntı anlayacağın ama galiba mutlu edebilmiştim hava soğuktu ama gerçekten o anda elimden gelen başka bir şey yoktu ve utanıyordum yani burda açıkladım bunuda ona göre ahahahah</div>
+        </div>
+        <button class="btn" onclick="nextStep(3, 4)">Biraz Daha... 💖</button>
+    </div>
+
+    <div id="step4" class="screen">
+        <h1 class="welcome-title">Sonsuza Dek...</h1>
+        <div class="gallery-grid">
+            <div class="polaroid" style="--r: -1deg"><img src="elay7.jpg"><p>Gururum Sensin</p>Yaaaa burda ne kadar gururlandığımı anlatamam tabi biliyosun ben hislerimi çok açıklayan biri değilim diye şu anda açıklıyorum.O kadar gururluydum ki okulunu bitirmiştin ve bir şeyi daha başardın beni inanılmaz mutlu ediyorsun anlatamıyorum tam ama anlıyorsundur iyi ki varsın iyi ki</div>
+            <div class="polaroid" style="--r: 2deg"><img src="elay2.jpg"><p>Her Mutluluğum</p>Zaman zaman düşünüyorumda geçen yıllarmızda her şeyim sen olmuşsun sevincide senle paylaşıyorum üzüntümüde senle geçen her gün binlercr kez şükür gerektiriyor ve hakkediyorsun bence sen inanılmaz birisin benim için</div>
+            <div class="polaroid" style="--r: -3deg"><img src="elay14.jpg"><p>Seni Çok Seviyorum</p>Sana ne söylesem nasıl anlatmaya çalışsam da anlatamıyorum gerçekten bazen mutluluktan boğazım kilitleniyor konuşmayı bırak yazamıyorum bile senin bana verdiğin her ama her şey için çok teşekkür ederim umarım bende sana karşılık verebilmişimdir.</div>
+        </div>
+        <button class="btn" onclick="nextStep(4, 5)">Son Bir Sürpriz... 💌</button>
+    </div>
+
+    <div id="step5" class="screen">
+        <h1 class="welcome-title">Sana Bir Notum Var</h1>
+        <div class="envelope-wrapper" onclick="this.classList.toggle('open')">
+            <div class="letter">
+                <h3 style="font-family: 'Dancing Script'; color: var(--pink); margin-top:0;">Canım Sevgilim...</h3>
+                <p>Bir yaş daha aldın görüyorsun zaman ne çabuk geçiyor ve biz hep mücadele ve mutlu olmaya devam ediyoruz.Ve ben seninle gurur duyuyorum ve her zaman da duyacağım beni hayatımda bu kadar mutlu eden biri hiç olmadı sen benim için teksin hepte tek kalacaksın.Her zaman sana söylediğim gibi ne zaman istersen ne istersen senin tabirinle Canoşki hep senin yanında olacak sana söz birtanem.Yeni yaşında umarım her şey dilediğimiz gibi olur daha birçok başarıyı başaracağından eminim her şey kalbin kadar tertemiz olsun.Seni çok ama çok seviyorum bambaşkasın bambaşka.Haaaa unutmadaaan Filtre Kahve Yapmayı ve içmeyi unutma lütfen.Canoşki seni çok seviyor !<br><br> İyi ki doğdun, iyi ki hayatımdasın!</p>
+            </div>
+        </div>
+        <p style="margin-top: 120px; color: #999;">(Zarfa dokunarak açabilirsin)</p>
+    </div>
+
+    <script>
+        function checkDate() {
+            const input = document.getElementById('dateInput').value;
+            if(input === "04.10.2021") {
+                document.getElementById('pwd-box').style.display = 'none';
+                document.querySelector('.heart-loader').style.display = 'none';
+                triggerExplosion();
+                setTimeout(() => { nextStep(0, 1); }, 1200);
+            } else {
+                document.getElementById('error').style.display = 'block';
+                document.getElementById('pwd-box').style.animation = 'shake 0.5s';
+                setTimeout(() => { document.getElementById('pwd-box').style.animation = ''; }, 500);
+            }
+        }
+
+        function triggerExplosion() {
+            const emojis = ['💖', '✨', '🌸', '🎉', '❤️'];
+            for (let i = 0; i < 100; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('particle');
+                particle.innerHTML = emojis[Math.floor(Math.random() * emojis.length)];
+                document.body.appendChild(particle);
+                const destX = (Math.random() - 0.5) * window.innerWidth * 1.5;
+                const destY = (Math.random() - 0.5) * window.innerHeight * 1.5;
+                particle.animate([
+                    { transform: `translate(-50%, -50%) scale(0.5)`, opacity: 1 },
+                    { transform: `translate(${destX}px, ${destY}px) scale(0)`, opacity: 0 }
+                ], { duration: 1500 + Math.random() * 1000, easing: 'ease-out', fill: 'forwards' });
+                setTimeout(() => particle.remove(), 3000);
+            }
+        }
+
+        function nextStep(current, next) {
+            const currentScreen = document.getElementById('step' + current);
+            const nextScreen = document.getElementById('step' + next);
+            currentScreen.style.opacity = '0';
+            setTimeout(() => {
+                currentScreen.style.display = 'none';
+                nextScreen.style.display = 'flex';
+                window.scrollTo(0,0);
+                setTimeout(() => nextScreen.style.opacity = '1', 50);
+            }, 800);
+        }
+
+        // Arka Plan Animasyonu
+        const canvas = document.getElementById('star-canvas');
+        const ctx = canvas.getContext('2d');
+        let parts = [];
+        function init() {
+            canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+            parts = [];
+            for(let i=0; i<60; i++) {
+                parts.push({
+                    x: Math.random()*canvas.width, y: Math.random()*canvas.height,
+                    s: Math.random()*2+1, v: Math.random()*0.3+0.1,
+                    t: Math.random() > 0.8 ? 'h' : 'c'
+                });
+            }
+        }
+        function animate() {
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+            ctx.fillStyle = "#ff758c";
+            parts.forEach(p => {
+                ctx.globalAlpha = 0.4;
+                if(p.t === 'c') {
+                    ctx.beginPath(); ctx.arc(p.x, p.y, p.s, 0, Math.PI*2); ctx.fill();
+                } else {
+                    ctx.font = "12px Arial"; ctx.fillText("❤", p.x, p.y);
+                }
+                p.y -= p.v; if(p.y < -10) p.y = canvas.height + 10;
+            });
+            requestAnimationFrame(animate);
+        }
+        window.addEventListener('resize', init); init(); animate();
+    </script>
+</body>
+</html>
